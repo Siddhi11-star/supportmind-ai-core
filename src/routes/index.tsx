@@ -1,24 +1,48 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AnimatedBackground } from "@/components/background/AnimatedBackground";
+import { LandingNav } from "@/components/landing/LandingNav";
+import {
+  LandingHero,
+  LandingFeatures,
+  LandingWorkflow,
+  LandingTech,
+  LandingCTA,
+  LandingFooter,
+} from "@/components/landing/LandingSections";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "SupportMind AI — Enterprise LLM-Powered Customer Support" },
+      {
+        name: "description",
+        content:
+          "Automate customer support with LLMs, RAG, guardrails, and AI evaluation. Grounded, accurate, enterprise-ready responses at scale.",
+      },
+      { property: "og:title", content: "SupportMind AI — Enterprise AI Support" },
+      {
+        property: "og:description",
+        content:
+          "LLM + RAG + guardrails + evaluation for accurate, grounded customer support automation.",
+      },
+    ],
+  }),
+  component: Landing,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Landing() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="relative min-h-screen text-foreground">
+      <AnimatedBackground />
+      <LandingNav />
+      <main>
+        <LandingHero />
+        <LandingFeatures />
+        <LandingWorkflow />
+        <LandingTech />
+        <LandingCTA />
+      </main>
+      <LandingFooter />
     </div>
   );
 }

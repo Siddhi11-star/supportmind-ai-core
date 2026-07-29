@@ -9,38 +9,156 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardTicketAnalysisRouteImport } from './routes/dashboard.ticket-analysis'
+import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
+import { Route as DashboardNewTicketRouteImport } from './routes/dashboard.new-ticket'
+import { Route as DashboardKnowledgeBaseRouteImport } from './routes/dashboard.knowledge-base'
+import { Route as DashboardEvaluationRouteImport } from './routes/dashboard.evaluation'
+import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
+import { Route as DashboardAiResponsesRouteImport } from './routes/dashboard.ai-responses'
 
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardTicketAnalysisRoute = DashboardTicketAnalysisRouteImport.update({
+  id: '/ticket-analysis',
+  path: '/ticket-analysis',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardNewTicketRoute = DashboardNewTicketRouteImport.update({
+  id: '/new-ticket',
+  path: '/new-ticket',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardKnowledgeBaseRoute = DashboardKnowledgeBaseRouteImport.update({
+  id: '/knowledge-base',
+  path: '/knowledge-base',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEvaluationRoute = DashboardEvaluationRouteImport.update({
+  id: '/evaluation',
+  path: '/evaluation',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardAiResponsesRoute = DashboardAiResponsesRouteImport.update({
+  id: '/ai-responses',
+  path: '/ai-responses',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/ai-responses': typeof DashboardAiResponsesRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/evaluation': typeof DashboardEvaluationRoute
+  '/dashboard/knowledge-base': typeof DashboardKnowledgeBaseRoute
+  '/dashboard/new-ticket': typeof DashboardNewTicketRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/ticket-analysis': typeof DashboardTicketAnalysisRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard/ai-responses': typeof DashboardAiResponsesRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/evaluation': typeof DashboardEvaluationRoute
+  '/dashboard/knowledge-base': typeof DashboardKnowledgeBaseRoute
+  '/dashboard/new-ticket': typeof DashboardNewTicketRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/ticket-analysis': typeof DashboardTicketAnalysisRoute
+  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteWithChildren
+  '/dashboard/ai-responses': typeof DashboardAiResponsesRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/evaluation': typeof DashboardEvaluationRoute
+  '/dashboard/knowledge-base': typeof DashboardKnowledgeBaseRoute
+  '/dashboard/new-ticket': typeof DashboardNewTicketRoute
+  '/dashboard/settings': typeof DashboardSettingsRoute
+  '/dashboard/ticket-analysis': typeof DashboardTicketAnalysisRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/dashboard/ai-responses'
+    | '/dashboard/analytics'
+    | '/dashboard/evaluation'
+    | '/dashboard/knowledge-base'
+    | '/dashboard/new-ticket'
+    | '/dashboard/settings'
+    | '/dashboard/ticket-analysis'
+    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard/ai-responses'
+    | '/dashboard/analytics'
+    | '/dashboard/evaluation'
+    | '/dashboard/knowledge-base'
+    | '/dashboard/new-ticket'
+    | '/dashboard/settings'
+    | '/dashboard/ticket-analysis'
+    | '/dashboard'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/dashboard/ai-responses'
+    | '/dashboard/analytics'
+    | '/dashboard/evaluation'
+    | '/dashboard/knowledge-base'
+    | '/dashboard/new-ticket'
+    | '/dashboard/settings'
+    | '/dashboard/ticket-analysis'
+    | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +166,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/ticket-analysis': {
+      id: '/dashboard/ticket-analysis'
+      path: '/ticket-analysis'
+      fullPath: '/dashboard/ticket-analysis'
+      preLoaderRoute: typeof DashboardTicketAnalysisRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/settings': {
+      id: '/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof DashboardSettingsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/new-ticket': {
+      id: '/dashboard/new-ticket'
+      path: '/new-ticket'
+      fullPath: '/dashboard/new-ticket'
+      preLoaderRoute: typeof DashboardNewTicketRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/knowledge-base': {
+      id: '/dashboard/knowledge-base'
+      path: '/knowledge-base'
+      fullPath: '/dashboard/knowledge-base'
+      preLoaderRoute: typeof DashboardKnowledgeBaseRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/evaluation': {
+      id: '/dashboard/evaluation'
+      path: '/evaluation'
+      fullPath: '/dashboard/evaluation'
+      preLoaderRoute: typeof DashboardEvaluationRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/analytics': {
+      id: '/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/ai-responses': {
+      id: '/dashboard/ai-responses'
+      path: '/ai-responses'
+      fullPath: '/dashboard/ai-responses'
+      preLoaderRoute: typeof DashboardAiResponsesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
+interface DashboardRouteChildren {
+  DashboardAiResponsesRoute: typeof DashboardAiResponsesRoute
+  DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
+  DashboardEvaluationRoute: typeof DashboardEvaluationRoute
+  DashboardKnowledgeBaseRoute: typeof DashboardKnowledgeBaseRoute
+  DashboardNewTicketRoute: typeof DashboardNewTicketRoute
+  DashboardSettingsRoute: typeof DashboardSettingsRoute
+  DashboardTicketAnalysisRoute: typeof DashboardTicketAnalysisRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAiResponsesRoute: DashboardAiResponsesRoute,
+  DashboardAnalyticsRoute: DashboardAnalyticsRoute,
+  DashboardEvaluationRoute: DashboardEvaluationRoute,
+  DashboardKnowledgeBaseRoute: DashboardKnowledgeBaseRoute,
+  DashboardNewTicketRoute: DashboardNewTicketRoute,
+  DashboardSettingsRoute: DashboardSettingsRoute,
+  DashboardTicketAnalysisRoute: DashboardTicketAnalysisRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
