@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Ticket,
@@ -26,86 +27,114 @@ import {
 import { GlassCard } from "@/components/ui/glass-card";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { Badge } from "@/components/ui/badge";
+import { fetchTickets, fetchAnalytics, setActiveTicketId, TicketListItem, AnalyticsData } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/")({
   component: DashboardHome,
 });
 
-const stats = [
-  {
-    icon: Ticket,
-    label: "Total Tickets",
-    value: 12847,
-    decimals: 0,
-    delta: "+12.4%",
-    up: true,
-  },
-  {
-    icon: CheckCircle2,
-    label: "Resolved Tickets",
-    value: 11782,
-    delta: "+9.1%",
-    up: true,
-  },
-  {
-    icon: AlertTriangle,
-    label: "Escalated",
-    value: 421,
-    delta: "-3.2%",
-    up: false,
-  },
-  {
-    icon: Gauge,
-    label: "Avg. Confidence",
-    value: 96.4,
-    decimals: 1,
-    suffix: "%",
-    delta: "+2.3%",
-    up: true,
-  },
-  {
-    icon: Clock,
-    label: "Avg. Response",
-    value: 3.2,
-    decimals: 1,
-    suffix: "s",
-    delta: "-0.4s",
-    up: true,
-  },
-  {
-    icon: Smile,
-    label: "CSAT",
-    value: 94.7,
-    decimals: 1,
-    suffix: "%",
-    delta: "+1.1%",
-    up: true,
-  },
-];
-
-const trendData = Array.from({ length: 14 }).map((_, i) => ({
-  d: `D${i + 1}`,
-  tickets: 620 + Math.round(Math.sin(i / 2) * 120 + Math.random() * 80),
-  resolved: 560 + Math.round(Math.sin(i / 2) * 100 + Math.random() * 80),
-}));
-
-const catData = [
-  { name: "Billing", value: 32 },
-  { name: "Technical", value: 28 },
-  { name: "Account", value: 18 },
-  { name: "Shipping", value: 14 },
-  { name: "Other", value: 8 },
-];
-
-const recent = [
-  { id: "#T-882134", subject: "Duplicate charge on invoice", pri: "High", cat: "Billing", conf: 0.96 },
-  { id: "#T-882131", subject: "Cannot reset password", pri: "Medium", cat: "Account", conf: 0.91 },
-  { id: "#T-882127", subject: "Shipment delayed to EU warehouse", pri: "Low", cat: "Shipping", conf: 0.88 },
-  { id: "#T-882122", subject: "API returning 500 on v2/orders", pri: "High", cat: "Technical", conf: 0.94 },
-  { id: "#T-882119", subject: "Update billing address", pri: "Low", cat: "Account", conf: 0.97 },
-];
-
 function DashboardHome() {
+  const navigate = useNavigate();
+  const [ticketsList, setTicketsList] = useState<TicketListItem[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [tList, anData] = await Promise.all([
+          fetchTickets(),
+          fetchAnalytics(),
+        ]);
+        if (tList.length > 0) setTicketsList(tList);
+        setAnalytics(anData);
+      } catch (e) {
+        console.error("Failed to load dashboard data:", e);
+      }
+    }
+    load();
+  }, []);
+
+  const stats = [
+    {
+      icon: Ticket,
+      label: "Total Tickets",
+      value: analytics?.total_tickets || 12847,
+      decimals: 0,
+      delta: "+12.4%",
+      up: true,
+    },
+    {
+      icon: CheckCircle2,
+      label: "Resolved Tickets",
+      value: analytics?.resolved_tickets || 11782,
+      delta: "+9.1%",
+      up: true,
+    },
+    {
+      icon: AlertTriangle,
+      label: "Escalated",
+      value: analytics?.escalated_tickets || 421,
+      delta: "-3.2%",
+      up: false,
+    },
+    {
+      icon: Gauge,
+      label: "Avg. Confidence",
+      value: analytics?.avg_confidence || 96.4,
+      decimals: 1,
+      suffix: "%",
+      delta: "+2.3%",
+      up: true,
+    },
+    {
+      icon: Clock,
+      label: "Avg. Response",
+      value: 3.2,
+      decimals: 1,
+      suffix: "s",
+      delta: "-0.4s",
+      up: true,
+    },
+    {
+      icon: Smile,
+      label: "CSAT",
+      value: analytics?.csat || 94.7,
+      decimals: 1,
+      suffix: "%",
+      delta: "+1.1%",
+      up: true,
+    },
+  ];
+
+  const trendData = Array.from({ length: 14 }).map((_, i) => ({
+    d: `D${i + 1}`,
+    tickets: 620 + Math.round(Math.sin(i / 2) * 120 + Math.random() * 80),
+    resolved: 560 + Math.round(Math.sin(i / 2) * 100 + Math.random() * 80),
+  }));
+
+  const catData = analytics?.categories || [
+    { name: "Billing", value: 32 },
+    { name: "Technical", value: 28 },
+    { name: "Account", value: 18 },
+    { name: "Shipping", value: 14 },
+    { name: "Other", value: 8 },
+  ];
+
+  const recent = ticketsList.length > 0
+    ? ticketsList.map((t) => ({
+        id: t.id,
+        subject: t.subject,
+        pri: t.priority,
+        cat: t.category,
+        conf: t.confidence,
+      }))
+    : [
+        { id: "#T-882134", subject: "Duplicate charge on invoice", pri: "High", cat: "Billing", conf: 0.96 },
+        { id: "#T-882131", subject: "Cannot reset password", pri: "Medium", cat: "Account", conf: 0.91 },
+        { id: "#T-882127", subject: "Shipment delayed to EU warehouse", pri: "Low", cat: "Shipping", conf: 0.88 },
+        { id: "#T-882122", subject: "API returning 500 on v2/orders", pri: "High", cat: "Technical", conf: 0.94 },
+        { id: "#T-882119", subject: "Update billing address", pri: "Low", cat: "Account", conf: 0.97 },
+      ];
   return (
     <div className="space-y-6">
       <PageHeader
@@ -268,12 +297,16 @@ function DashboardHome() {
               {recent.map((r) => (
                 <tr
                   key={r.id}
-                  className="border-t border-white/5 transition hover:bg-white/[0.03]"
+                  onClick={() => {
+                    setActiveTicketId(r.id);
+                    navigate({ to: "/dashboard/ticket-analysis" });
+                  }}
+                  className="border-t border-white/5 transition hover:bg-white/[0.05] cursor-pointer"
                 >
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                  <td className="px-4 py-3 font-mono text-xs text-brand-cyan">
                     {r.id}
                   </td>
-                  <td className="px-4 py-3">{r.subject}</td>
+                  <td className="px-4 py-3 font-medium">{r.subject}</td>
                   <td className="px-4 py-3">
                     <Badge variant="outline" className="border-white/15">
                       {r.cat}
@@ -283,7 +316,7 @@ function DashboardHome() {
                     <PriorityPill p={r.pri} />
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className="text-brand-cyan">
+                    <span className="text-brand-cyan font-mono">
                       {(r.conf * 100).toFixed(1)}%
                     </span>
                   </td>

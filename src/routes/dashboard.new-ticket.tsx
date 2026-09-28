@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "./dashboard.index";
 
+import { submitTicket, setActiveTicketId, TicketDetail } from "@/lib/api";
+import { toast } from "sonner";
+
 export const Route = createFileRoute("/dashboard/new-ticket")({
   component: NewTicket,
 });
@@ -14,16 +17,22 @@ export const Route = createFileRoute("/dashboard/new-ticket")({
 function NewTicket() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
+  const [processedTicket, setProcessedTicket] = useState<TicketDetail | null>(null);
 
-  const submit = () => {
+  const submit = async () => {
     if (!text.trim()) return;
     setLoading(true);
-    setDone(false);
-    setTimeout(() => {
+    setProcessedTicket(null);
+    try {
+      const ticket = await submitTicket({ message: text });
+      setActiveTicketId(ticket.id);
+      setProcessedTicket(ticket);
+      toast.success(`Ticket ${ticket.id} created and analyzed`);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to process ticket");
+    } finally {
       setLoading(false);
-      setDone(true);
-    }, 1800);
+    }
   };
 
   return (
@@ -99,7 +108,7 @@ function NewTicket() {
       </AnimatePresence>
 
       <AnimatePresence>
-        {done && (
+        {processedTicket && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -111,10 +120,10 @@ function NewTicket() {
                   <span className="grid h-6 w-6 place-items-center rounded-full bg-emerald-500/20 text-emerald-300">
                     ✓
                   </span>
-                  Ticket <span className="font-mono">#T-882{Math.floor(Math.random() * 900 + 100)}</span> processed
+                  Ticket <span className="font-mono">{processedTicket.id}</span> processed
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Full AI analysis and grounded response are ready.
+                  Classified as <span className="font-medium text-brand-cyan">{processedTicket.category}</span> · Intent: {processedTicket.intent}
                 </div>
               </div>
               <Button

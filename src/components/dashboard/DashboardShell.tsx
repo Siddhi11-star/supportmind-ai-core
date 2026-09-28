@@ -84,11 +84,11 @@ export function DashboardShell() {
 
           <div className="glass-panel-strong mt-6 rounded-xl p-3 text-xs text-muted-foreground">
             <div className="mb-1 flex items-center gap-2 font-medium text-foreground">
-              <Cpu className="h-3.5 w-3.5 text-brand-cyan" /> Qwen-2.5 · 14B
+              <Cpu className="h-3.5 w-3.5 text-brand-cyan" /> Gemini 2.0 Flash
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse-glow" />
-              All systems operational
+              Cloud API operational
             </div>
           </div>
         </div>
@@ -127,7 +127,7 @@ function TopBar() {
           <div className="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs md:flex">
             <Cpu className="h-3.5 w-3.5 text-brand-cyan" />
             <span className="text-muted-foreground">Model:</span>
-            <span className="font-medium">Qwen-2.5</span>
+            <span className="font-medium">Gemini 2.0 Flash</span>
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </div>
           <div className="hidden items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs md:flex">
