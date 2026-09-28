@@ -32,12 +32,15 @@ Your goal is to write a courteous, accurate, grounded, and professional customer
 Customer Inquiry:
 "{inquiry}"
 
+Detected Ticket Category: {category}
+Detected Customer Intent: {intent}
+
 Retrieved Company Policies & Knowledge Base Context:
 {context}
 
 Guidelines:
-- Ground your answer strictly in the provided company policies and context.
-- Be empathetic and clear.
+- Ground your answer strictly in the provided company policies and context for this specific inquiry.
+- Address the customer's exact issue and concern directly.
 - Explicitly mention reference numbers or next steps if applicable.
 - If refunding or taking action, provide realistic timelines based on policy.
 - Sign off as:
@@ -113,6 +116,8 @@ class TicketPipeline:
         # 5. Step 3: LLM Response Generation
         response_prompt = RESPONSE_GENERATION_PROMPT.format(
             inquiry=cleaned_message,
+            category=category,
+            intent=intent,
             context=context_str,
         )
 

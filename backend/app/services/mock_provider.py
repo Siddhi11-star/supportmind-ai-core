@@ -26,7 +26,7 @@ class MockFallbackProvider(LLMProvider):
         text = prompt.lower()
         
         # Check if classification was requested
-        if "classify" in prompt.lower() or "intent" in prompt.lower() or json_output:
+        if json_output:
             category = "General"
             subcategory = "Customer Support"
             priority = "Medium"
@@ -94,51 +94,96 @@ class MockFallbackProvider(LLMProvider):
             }
             return json.dumps(result)
 
-        # Generating customer response dynamically based on inquiry context
-        if any(w in text for w in ["ship", "delivery", "deliver", "days", "passed", "track", "transit", "package", "arrived"]):
-            # Extract days or default
-            days_match = re.search(r"(\d+)\s*days?", prompt, re.IGNORECASE)
-            days_text = f"{days_match.group(1)} days" if days_match else "an extended period"
+        # Extract customer inquiry specifically, NOT the entire prompt/context
+        inquiry_match = re.search(r'Customer Inquiry:\s*[\n\r]*"(.*?)"', prompt, re.DOTALL)
+        if inquiry_match:
+            customer_text = inquiry_match.group(1).strip()
+        else:
+            customer_text = prompt.strip()
+
+        c_lower = customer_text.lower()
+        
+        category_match = re.search(r'Detected Ticket Category:\s*(.*)', prompt)
+        detected_category = category_match.group(1).strip().lower() if category_match else ""
+
+        intent_match = re.search(r'Detected Customer Intent:\s*(.*)', prompt)
+        detected_intent = intent_match.group(1).strip().lower() if intent_match else ""
+
+        # 1. Return / Return Refund (e.g. "i didnt get refund of returning the order")
+        if "return" in c_lower and any(w in c_lower for w in ["refund", "money", "credit", "order"]):
+            return (
+                "Hi there,\n\n"
+                "Thank you for contacting SupportMind AI customer support regarding your return.\n\n"
+                "I understand that you have returned your order and have not yet received your refund. "
+                "In accordance with our Refund Policy v3.2, once a returned package is checked in and scanned at our fulfillment returns center, "
+                "refunds are processed within 3–5 business days back to your original payment method.\n\n"
+                "I have verified your return tracking status and confirmed receipt at our warehouse facility. Your refund of $149.00 has been "
+                "approved and scheduled under reference authorization #RF-882134.\n\n"
+                "You should see the credit reflect in your account within 3–5 business days depending on your financial institution. "
+                "If the refund does not reflect within 5 business days, please reply directly to this ticket for expedited tier-2 escalation.\n\n"
+                "Best regards,\nSupportMind AI"
+            )
+
+        # 2. Duplicate charge / Overcharge (e.g. "charged twice", "double price")
+        if any(w in c_lower for w in ["twice", "double", "duplicate", "two times", "overcharged", "charged twice"]):
+            return (
+                "Hi there,\n\n"
+                "Thank you for reaching out — I am sorry for the trouble regarding the duplicate charge on your account.\n\n"
+                "I have reviewed your transaction records with our payment gateway and confirmed the duplicate authorization. "
+                "As per our Refund Policy v3.2, duplicate charges are reversed automatically back to your payment method.\n\n"
+                "I have processed the immediate refund for the duplicate transaction under Reference Number: #RF-882134. "
+                "The funds will post back to your account statement within 3–5 business days.\n\n"
+                "Please accept our apologies for this billing inconvenience. Feel free to reply here if you have any further questions.\n\n"
+                "Best regards,\nSupportMind AI"
+            )
+
+        # 3. Shipping / Delivery Delay (e.g. "i didnt get order .. 15 days passed")
+        if any(w in c_lower for w in ["ship", "delivery", "deliver", "days passed", "not arrived", "where is", "tracking", "courier", "package"]) or detected_category == "shipping":
+            days_match = re.search(r"(\d+)\s*days?", customer_text, re.IGNORECASE)
+            days_phrase = f"{days_match.group(1)} days" if days_match else "an extended timeframe"
             return (
                 "Hi there,\n\n"
                 "Thank you for reaching out to SupportMind AI customer support. I understand you are inquiring about your order delivery and that "
-                f"{days_text} have passed without arrival.\n\n"
+                f"{days_phrase} have passed without arrival.\n\n"
                 "According to our Global Shipping & Delivery SLA, standard delivery times are 3–5 business days. Because your shipment has significantly "
                 "exceeded this delivery window, I have immediately initiated an urgent courier trace (Ref: #TRK-882134) with our logistics fulfillment team.\n\n"
                 "Under our Delivery Guarantee Policy, if the carrier cannot confirm physical delivery within 48 hours, we will immediately offer you "
                 "either an expedited free replacement or a 100% full refund.\n\n"
                 "We sincerely apologize for this shipping delay and will notify you as soon as the carrier updates tracking.\n\n"
-                "Best regards,\nSupportMind AI Support Team"
+                "Best regards,\nSupportMind AI"
             )
 
-        if any(w in text for w in ["error", "500", "404", "webhook", "api", "bug", "crash", "failed", "broken"]):
+        # 4. Technical / API / Server Error (e.g. "500 server error", "webhook failed")
+        if any(w in c_lower for w in ["error", "500", "404", "webhook", "api", "bug", "crash", "failed", "broken"]) or detected_category == "technical":
             return (
                 "Hi there,\n\n"
-                "Thank you for contacting SupportMind AI technical support. I have reviewed your report regarding the webhook server error.\n\n"
+                "Thank you for contacting SupportMind AI technical support. I have reviewed your report regarding the technical error.\n\n"
                 "Our engineering team has received the alert and is actively inspecting the backend endpoint logs. "
                 "In accordance with our API & Webhook Troubleshooting Guide, automated retries with exponential backoff are currently active to ensure "
                 "no payload data is permanently lost.\n\n"
                 "We are deploying a hotfix to resolve the upstream handler timeout and will update this ticket once service is fully restored.\n\n"
-                "Best regards,\nSupportMind AI Support Team"
+                "Best regards,\nSupportMind AI"
             )
 
-        if any(w in text for w in ["password", "login", "reset", "email", "account", "mfa", "access"]):
+        # 5. Account / Password / Login
+        if any(w in c_lower for w in ["password", "login", "reset", "email", "account", "mfa", "access", "auth"]) or detected_category == "account":
             return (
                 "Hi there,\n\n"
                 "Thank you for contacting SupportMind AI support regarding your account access.\n\n"
                 "For your security, we have initiated an identity verification checkpoint. Please check your registered email address for a secure, "
                 "one-time password reset link valid for the next 30 minutes.\n\n"
                 "If you continue experiencing difficulties logging in, simply reply to this ticket and our security team will assist you.\n\n"
-                "Best regards,\nSupportMind AI Support Team"
+                "Best regards,\nSupportMind AI"
             )
 
-        # Default Billing / General inquiry response
+        # 6. General / Billing / Inquiries
+        cleaned_inquiry = customer_text[:100] + ("..." if len(customer_text) > 100 else "")
         return (
             "Hi there,\n\n"
-            "Thank you for contacting SupportMind AI customer support. I have reviewed your account regarding your recent billing inquiry.\n\n"
-            "In accordance with our Refund Policy v3.2, duplicate charges and disputed transactions are verified against our payment gateway logs. "
-            "Verified refunds are issued automatically within 3–5 business days back to your original payment method (Reference: #RF-882134).\n\n"
-            "Please rest assured that your satisfaction is our highest priority. If you do not see the credit posted within 5 business days, please reply "
-            "directly to this ticket and we will escalate immediately.\n\n"
-            "Best regards,\nSupportMind AI Support Team"
+            f"Thank you for reaching out to SupportMind AI customer support regarding: \"{cleaned_inquiry}\".\n\n"
+            "I have reviewed your request in detail against our standard enterprise service policies. "
+            "Our support operations team has received your ticket and verified your account status.\n\n"
+            "We are actively working on resolving this for you. If you have any additional information or order numbers to add, "
+            "please reply directly to this ticket.\n\n"
+            "Best regards,\nSupportMind AI"
         )

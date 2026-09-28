@@ -1,18 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Copy, RefreshCw, Download, ShieldCheck, Sparkles, AlertTriangle, Loader2 } from "lucide-react";
+import { Copy, RefreshCw, Download, ShieldCheck, Sparkles, AlertTriangle, Loader2, MessageSquare } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { PageHeader } from "./dashboard.index";
 import {
   fetchTicket,
+  fetchTickets,
   fetchLatestTicket,
   regenerateAIResponse,
   getActiveTicketId,
+  setActiveTicketId,
   TicketDetail,
+  TicketListItem,
 } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard/ai-responses")({
@@ -21,32 +31,55 @@ export const Route = createFileRoute("/dashboard/ai-responses")({
 
 function AIResponse() {
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
+  const [ticketList, setTicketList] = useState<TicketListItem[]>([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
 
-  useEffect(() => {
-    async function load() {
-      try {
+  const loadTicket = async (id?: string) => {
+    setLoading(true);
+    try {
+      let data: TicketDetail;
+      if (id) {
+        data = await fetchTicket(id);
+      } else {
         const activeId = getActiveTicketId();
-        let data: TicketDetail;
         if (activeId) {
           data = await fetchTicket(activeId);
         } else {
           data = await fetchLatestTicket();
         }
-        setTicket(data);
-        if (data.response?.content) {
-          setText(data.response.content);
-        }
-      } catch (e) {
-        console.error("Failed to load ticket response:", e);
-      } finally {
-        setLoading(false);
       }
+      setTicket(data);
+      setActiveTicketId(data.id);
+      if (data.response?.content) {
+        setText(data.response.content);
+      } else {
+        setText("");
+      }
+    } catch (e) {
+      console.error("Failed to load ticket response:", e);
+    } finally {
+      setLoading(false);
     }
-    load();
+  };
+
+  useEffect(() => {
+    async function init() {
+      try {
+        const all = await fetchTickets();
+        setTicketList(all);
+      } catch (err) {
+        console.error("Failed to fetch tickets list:", err);
+      }
+      await loadTicket();
+    }
+    init();
   }, []);
+
+  const handleSelectTicket = async (selectedId: string) => {
+    await loadTicket(selectedId);
+  };
 
   const handleRegenerate = async () => {
     if (!ticket) return;
@@ -84,7 +117,26 @@ function AIResponse() {
         title="AI Response"
         desc="Grounded, guarded, and evaluated before delivery."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-3">
+            {ticketList.length > 0 && (
+              <div className="w-56">
+                <Select
+                  value={ticket?.id}
+                  onValueChange={handleSelectTicket}
+                >
+                  <SelectTrigger className="border-white/15 bg-white/5 text-xs text-foreground">
+                    <SelectValue placeholder="Select ticket" />
+                  </SelectTrigger>
+                  <SelectContent className="border-white/10 bg-slate-950/95 backdrop-blur-md">
+                    {ticketList.map((t) => (
+                      <SelectItem key={t.id} value={t.id} className="text-xs">
+                        {t.id} ({t.category})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Badge className="bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30">
               <ShieldCheck className="mr-1 h-3 w-3" /> Grounded
             </Badge>
@@ -94,6 +146,31 @@ function AIResponse() {
           </div>
         }
       />
+
+      {ticket && (
+        <GlassCard strong className="border-white/10 bg-white/[0.02]">
+          <div className="flex items-start gap-3">
+            <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-brand-cyan" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Inquiry for {ticket.id}
+                </span>
+                <Badge variant="outline" className="border-white/10 text-[10px]">
+                  {ticket.category}
+                </Badge>
+                <Badge variant="outline" className="border-white/10 text-[10px]">
+                  {ticket.intent}
+                </Badge>
+              </div>
+              <p className="mt-1 text-sm text-foreground/90">
+                "{ticket.message}"
+              </p>
+            </div>
+            {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          </div>
+        </GlassCard>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <GlassCard strong className="lg:col-span-2">
