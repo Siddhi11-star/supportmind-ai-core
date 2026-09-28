@@ -7,6 +7,19 @@ from .gemini_provider import GeminiProvider
 # Default Enterprise Seed Documents matching existing UI expectations
 SEED_DOCUMENTS = [
     {
+        "id": "doc-shipping-policy",
+        "name": "Global Shipping & Delivery SLA",
+        "source": "policies/shipping-policy.md",
+        "category": "Shipping",
+        "content": (
+            "SupportMind AI Global Shipping & Delivery Policy. "
+            "Standard domestic delivery is 3–5 business days, and international delivery is 7–10 business days. "
+            "If an order has not arrived within 10 business days, the order is flagged as delayed and triggers an automated "
+            "courier investigation. If delivery is not confirmed within 14 days, customers are entitled to an immediate free "
+            "replacement shipment or full refund. Reference tracking code #TRK-* when updating customers."
+        ),
+    },
+    {
         "id": "doc-refund-policy",
         "name": "Refund Policy v3.2",
         "source": "policies/refund-policy.md",
@@ -31,6 +44,18 @@ SEED_DOCUMENTS = [
             "identical amount plus timestamp within 60 seconds. "
             "Verify whether one authorization is pending or captured. Pending duplicate authorizations "
             "typically drop off within 48 hours without debiting funds."
+        ),
+    },
+    {
+        "id": "doc-api-guide",
+        "name": "API & Webhook Troubleshooting",
+        "source": "kb/api-troubleshooting.md",
+        "category": "Technical",
+        "content": (
+            "API, Webhook & Server Troubleshooting Guide. "
+            "HTTP 500 responses on webhook listeners typically indicate unhandled exceptions or connection timeouts. "
+            "SupportMind AI automatically retries webhook deliveries with exponential backoff (5s, 30s, 5m). "
+            "Check server error logs for stack traces, inspect payload serialization, and verify endpoint SSL certificates."
         ),
     },
     {
@@ -120,11 +145,21 @@ class RAGService:
             overlap = query_words.intersection(doc_words)
             jaccard = len(overlap) / max(len(query_words.union(doc_words)), 1)
             
-            # Boost domain keywords
-            score = 0.50 + min(jaccard * 2.5, 0.45)
-            if any(w in query.lower() for w in ["charge", "refund", "billing", "twice", "order"]):
+            # Boost domain keywords based on query intent
+            score = 0.50 + min(jaccard * 2.5, 0.40)
+            q = query.lower()
+
+            if any(w in q for w in ["ship", "delivery", "deliver", "days", "passed", "track", "transit", "arrive", "warehouse"]):
+                if doc.get("category") == "Shipping" or "shipping" in doc["name"].lower():
+                    score = max(score, 0.96)
+                elif "refund" in doc["name"].lower():
+                    score = max(score, 0.82)
+            elif any(w in q for w in ["charge", "refund", "billing", "twice", "duplicate", "invoice", "payment"]):
                 if "refund" in doc["name"].lower() or "billing" in doc["name"].lower():
-                    score = max(score, 0.92 if "refund" in doc["name"].lower() else 0.88)
+                    score = max(score, 0.94)
+            elif any(w in q for w in ["error", "500", "404", "webhook", "api", "bug", "crash", "code"]):
+                if doc.get("category") == "Technical" or "troubleshooting" in doc["name"].lower() or "api" in doc["name"].lower():
+                    score = max(score, 0.95)
             
             # Create snippet
             snippet = doc_content[:240].strip() + ("..." if len(doc_content) > 240 else "")

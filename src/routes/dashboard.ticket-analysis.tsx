@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, Tag, Target, Gauge, Layers, MessageSquare, Loader2 } from "lucide-react";
+import { AlertCircle, Tag, Target, Gauge, Layers, MessageSquare, Loader2, ArrowRight } from "lucide-react";
 import { GlassCard } from "@/components/ui/glass-card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "./dashboard.index";
@@ -153,6 +154,19 @@ function TicketAnalysis() {
             ))}
           </div>
         </GlassCard>
+      </div>
+
+      <div className="flex items-center justify-between pt-2">
+        <Button variant="outline" asChild className="border-white/15 bg-white/5 hover:bg-white/10">
+          <Link to="/dashboard">
+            Back to Queue
+          </Link>
+        </Button>
+        <Button asChild className="bg-gradient-brand text-white shadow-lg glow-brand hover:opacity-95">
+          <Link to="/dashboard/ai-responses">
+            Review AI Response <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

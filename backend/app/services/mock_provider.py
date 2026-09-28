@@ -94,13 +94,51 @@ class MockFallbackProvider(LLMProvider):
             }
             return json.dumps(result)
 
-        # Generating customer response
+        # Generating customer response dynamically based on inquiry context
+        if any(w in text for w in ["ship", "delivery", "deliver", "days", "passed", "track", "transit", "package", "arrived"]):
+            # Extract days or default
+            days_match = re.search(r"(\d+)\s*days?", prompt, re.IGNORECASE)
+            days_text = f"{days_match.group(1)} days" if days_match else "an extended period"
+            return (
+                "Hi there,\n\n"
+                "Thank you for reaching out to SupportMind AI customer support. I understand you are inquiring about your order delivery and that "
+                f"{days_text} have passed without arrival.\n\n"
+                "According to our Global Shipping & Delivery SLA, standard delivery times are 3–5 business days. Because your shipment has significantly "
+                "exceeded this delivery window, I have immediately initiated an urgent courier trace (Ref: #TRK-882134) with our logistics fulfillment team.\n\n"
+                "Under our Delivery Guarantee Policy, if the carrier cannot confirm physical delivery within 48 hours, we will immediately offer you "
+                "either an expedited free replacement or a 100% full refund.\n\n"
+                "We sincerely apologize for this shipping delay and will notify you as soon as the carrier updates tracking.\n\n"
+                "Best regards,\nSupportMind AI Support Team"
+            )
+
+        if any(w in text for w in ["error", "500", "404", "webhook", "api", "bug", "crash", "failed", "broken"]):
+            return (
+                "Hi there,\n\n"
+                "Thank you for contacting SupportMind AI technical support. I have reviewed your report regarding the webhook server error.\n\n"
+                "Our engineering team has received the alert and is actively inspecting the backend endpoint logs. "
+                "In accordance with our API & Webhook Troubleshooting Guide, automated retries with exponential backoff are currently active to ensure "
+                "no payload data is permanently lost.\n\n"
+                "We are deploying a hotfix to resolve the upstream handler timeout and will update this ticket once service is fully restored.\n\n"
+                "Best regards,\nSupportMind AI Support Team"
+            )
+
+        if any(w in text for w in ["password", "login", "reset", "email", "account", "mfa", "access"]):
+            return (
+                "Hi there,\n\n"
+                "Thank you for contacting SupportMind AI support regarding your account access.\n\n"
+                "For your security, we have initiated an identity verification checkpoint. Please check your registered email address for a secure, "
+                "one-time password reset link valid for the next 30 minutes.\n\n"
+                "If you continue experiencing difficulties logging in, simply reply to this ticket and our security team will assist you.\n\n"
+                "Best regards,\nSupportMind AI Support Team"
+            )
+
+        # Default Billing / General inquiry response
         return (
             "Hi there,\n\n"
-            "Thank you for contacting SupportMind AI customer support. I have reviewed your request regarding your recent inquiry.\n\n"
-            "Our team is actively verifying the details in accordance with our standard service policies. "
-            "If your issue involves an unauthorized or duplicate charge, our policy guarantees automatic reversal within 3–5 business days. "
-            "Please rest assured that your satisfaction is our highest priority.\n\n"
-            "If you need further assistance or would like to share additional information, simply reply to this ticket.\n\n"
+            "Thank you for contacting SupportMind AI customer support. I have reviewed your account regarding your recent billing inquiry.\n\n"
+            "In accordance with our Refund Policy v3.2, duplicate charges and disputed transactions are verified against our payment gateway logs. "
+            "Verified refunds are issued automatically within 3–5 business days back to your original payment method (Reference: #RF-882134).\n\n"
+            "Please rest assured that your satisfaction is our highest priority. If you do not see the credit posted within 5 business days, please reply "
+            "directly to this ticket and we will escalate immediately.\n\n"
             "Best regards,\nSupportMind AI Support Team"
         )
